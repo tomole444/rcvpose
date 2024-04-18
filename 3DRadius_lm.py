@@ -127,7 +127,7 @@ if __name__=='__main__':
     for class_name in linemod_cls_names:
         print(class_name)
         
-        pcd_load = o3d.io.read_point_cloud(linemod_path+class_name+"/"+class_name+".ply")
+        pcd_load = o3d.io.read_point_cloud(linemod_path+class_name+"/"+"mesh.ply")
     
         xyz_load = np.asarray(pcd_load.points)
         print(xyz_load)
@@ -161,7 +161,7 @@ if __name__=='__main__':
             for filename in os.listdir(dataDict):
                 if filename.endswith(".dpt"):
                     #and os.path.exists(saveDict+os.path.splitext(filename)[0][5:].zfill(6)+'.npy')==False
-                    print(filename)
+                    #print(filename)
                     #depth = np.load(GTDepthPath+os.path.splitext(filename)[0][5:].zfill(6)+'.npy')*1000
                     realdepth = read_depth(dataDict+filename)
                     mask = np.asarray(Image.open(linemod_path+class_name+"/mask/"+os.path.splitext(filename)[0][5:].zfill(4)+".png"), dtype=int)
@@ -172,15 +172,15 @@ if __name__=='__main__':
                     #plt.show()
                     Radius3DMap = np.zeros(mask.shape)
                     RT = np.load(linemod_path+class_name+"/pose/pose"+os.path.splitext(filename)[0][5:]+".npy")
-                    print(RT)
-                    print(linemod_pose(rootDict,os.path.splitext(filename)[0][5:]))
+                    #print(RT)
+                    #print(linemod_pose(rootDict,os.path.splitext(filename)[0][5:]))
                     pixel_coor = np.argwhere(mask==255)
                     xyz,y,x = rgbd_to_point_cloud(linemod_K, realdepth)
-                    print(xyz)
-                    print(RT)
+                    #print(xyz)
+                    #print(RT)
                     dump, transformed_kpoint = project(np.array([keypoint]),linemod_K,RT)
                     transformed_kpoint = transformed_kpoint[0]*1000
-                    print(transformed_kpoint)
+                    #print(transformed_kpoint)
                     distance_list = ((xyz[:,0]-transformed_kpoint[0])**2+(xyz[:,1]-transformed_kpoint[1])**2+(xyz[:,2]-transformed_kpoint[2])**2)**0.5
                     Radius3DMap = fast_for_map(y, x, xyz, distance_list, Radius3DMap)
                     #xy, actual_xyz=project(xyz_load,linemod_K,RT)
@@ -199,8 +199,8 @@ if __name__=='__main__':
                     #    depth_list = np.append(depth_list,Radius3DMap[Radius3DMap.nonzero()])
                     iter_count+=1
                     #print(Radius3DMap[Radius3DMap.nonzero()])
-                    plt.imshow(Radius3DMap)
-                    plt.show()
+                      #plt.imshow(Radius3DMap)
+                      #plt.show()
                     mean = 0.84241277810665
                     std = 0.12497967663932731
                     #Radius3DMap[Radius3DMap.nonzero()] = (Radius3DMap[Radius3DMap.nonzero()]-mean)/std

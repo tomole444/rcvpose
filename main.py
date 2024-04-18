@@ -48,10 +48,13 @@ if __name__ == "__main__":
                     type=str,
                     default='ckpts/')   
     parser.add_argument('--demo_mode',
-                    type=bool,
+                    type=str2bool,
                     default=False) 
     parser.add_argument('--test_occ',
                     type=bool,
+                    default=False)
+    parser.add_argument('--using_ckpts',
+                    type=str2bool,
                     default=False) 
     opts = parser.parse_args()
 

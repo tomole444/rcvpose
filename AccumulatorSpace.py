@@ -16,7 +16,8 @@ from sklearn import metrics
 import scipy
 
 
-lm_cls_names = ['ape', 'benchvise', 'cam', 'can', 'cat', 'duck', 'driller', 'eggbox', 'glue', 'holepuncher','iron','lamp','phone']
+#lm_cls_names = ['ape', 'benchvise', 'cam', 'can', 'cat', 'duck', 'driller', 'eggbox', 'glue', 'holepuncher','iron','lamp','phone']
+lm_cls_names = ['can']
 lmo_cls_names = ['ape', 'can', 'cat', 'duck', 'driller',  'eggbox', 'glue', 'holepuncher']
 ycb_cls_names={1:'002_master_chef_can',
            2:'003_cracker_box',
@@ -497,6 +498,7 @@ def estimate_6d_pose_lm(opts):
     
     for class_name in lm_cls_names:
         print("Evaluation on ", class_name)
+        opts.root_dataset = "./datasets/" #Changed
         rootPath = opts.root_dataset + "LINEMOD_ORIG/"+class_name+"/" 
         rootpvPath = opts.root_dataset + "LINEMOD/"+class_name+"/" 
         
@@ -504,7 +506,7 @@ def estimate_6d_pose_lm(opts):
         test_list = [ s.replace('\n', '') for s in test_list]
         #print(test_list)
         
-        pcd_load = o3d.io.read_point_cloud(opts.root_dataset + "LINEMOD/"+class_name+"/"+class_name+".ply")
+        pcd_load = o3d.io.read_point_cloud(opts.root_dataset + "LINEMOD/"+class_name+"/"+"mesh.ply")
         
         #time consumption
         net_time = 0
@@ -549,8 +551,10 @@ def estimate_6d_pose_lm(opts):
             max_radii_dm[i] = dsitances.max()*10
         #print(max_radii_dm)
         dataPath = rootpvPath + 'JPEGImages/'
-            
-        for filename in os.listdir(dataPath):
+        images = os.listdir(dataPath)
+        images.sort()
+
+        for filename in images:
             #filename = '000810.jpg'
             #print("Evaluating ", filename)
             if filename.endswith(".jpg"):
@@ -567,7 +571,7 @@ def estimate_6d_pose_lm(opts):
                         keypoint=keypoints[keypoint_count]
                         #print(keypoint)
                         
-                        #model_path = "ape_pt0_syn18.pth.tar"
+                        #model_path = "ape_pt1.pth.tar"
                         if opts.using_ckpts:
                             if(os.path.exists(model_path)==False):
                                 raise ValueError(opts.model_dir + class_name+"_pt"+str(keypoint_count)+".pth.tar not found")
@@ -593,6 +597,7 @@ def estimate_6d_pose_lm(opts):
                         normalized_depth = []
                         tic = time.time_ns()
                         if opts.using_ckpts:
+                            print(f"Inferencing image with model for kpt {keypoint_count}" )
                             sem_out, radial_out = FCResBackbone(model_list[keypoint_count-1], input_path, normalized_depth)
                         
                         toc = time.time_ns()
@@ -660,11 +665,11 @@ def estimate_6d_pose_lm(opts):
                     kpts = keypoints[1:4,:]*1000
                     RT = np.zeros((4, 4))
                     horn.lmshorn(kpts, estimated_kpts, 3, RT)
-                    dump, xyz_load_est_transformed=project(xyz_load*1000, linemod_K, RT[0:3,:])
+                    dump, xyz_load_est_transformed=project(xyz_load, linemod_K, RT[0:3,:])
                     RTGT_mm = RTGT
                     RTGT_mm[:,3] = RTGT_mm[:,3]*1000
                     #print(RTGT_mm)
-                    dump, xyz_load_transformed=project(xyz_load*1000, linemod_K, RTGT_mm)
+                    dump, xyz_load_transformed=project(xyz_load, linemod_K, RTGT_mm)
                     
                     #xyz_load_est_transformed = xyz_load_est_transformed*1000
                     if opts.demo_mode:
@@ -677,7 +682,7 @@ def estimate_6d_pose_lm(opts):
                     sceneEst = o3d.geometry.PointCloud()
                     sceneGT.points=o3d.utility.Vector3dVector(xyz_load_transformed)
                     sceneEst.points=o3d.utility.Vector3dVector(xyz_load_est_transformed)
-                    sceneGT.paint_uniform_color(np.array([0,0,1]))
+                    sceneGT.paint_uniform_color(np.array([0,1,0]))
                     sceneEst.paint_uniform_color(np.array([1,0,0]))
                     if opts.demo_mode:
                         o3d.visualization.draw_geometries([sceneGT, sceneEst],window_name='gt vs est before icp')
@@ -691,13 +696,14 @@ def estimate_6d_pose_lm(opts):
                     else:
                         distance = np.asarray(sceneGT.compute_point_cloud_distance(sceneEst)).mean()
                         #print('ADD(s) point distance before ICP: ', distance)
+                        print(f"Before ICP Distance {distance}")
                         if distance <= add_threshold[class_name]*1000:
                             bf_icp+=1
 
                     scene = o3d.geometry.PointCloud()
                     scene.points = o3d.utility.Vector3dVector(xyz_mm_icp)
                     cad_model = o3d.geometry.PointCloud()
-                    cad_model.points = o3d.utility.Vector3dVector(xyz_load*1000)
+                    cad_model.points = o3d.utility.Vector3dVector(xyz_load)
                     # trans_init = np.asarray([[1, 0, 0, 0],
                     #                         [0, 1, 0, 0],
                     #                         [0, 0, 1, 0], 
@@ -724,6 +730,7 @@ def estimate_6d_pose_lm(opts):
                             af_icp+=1
                     else:
                         distance = np.asarray(sceneGT.compute_point_cloud_distance(cad_model)).mean()
+                        print(f"ICP Distance {distance}")
                         if distance <= add_threshold[class_name]*1000:
                             af_icp+=1                   
                     general_counter += 1
