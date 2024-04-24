@@ -515,6 +515,23 @@ def read_depth(path):
 
 depthList=[]
 
+def test_ckpt():
+
+    model_path = "/home/thws_robotik/Documents/Leyh/6dpose/detection/rcvpose/ckpts/book_kpt_1.pth.tar"
+    model = DenseFCNResNet152(3,2)
+    #model = torch.nn.DataParallel(model)
+    #checkpoint = torch.load(model_path)
+    #model.load_state_dict(checkpoint)
+    optim = torch.optim.Adam(model.parameters(), lr=1e-3)
+    model, _, _, _ = utils.load_checkpoint(model, optim, model_path)
+    model.eval()
+
+    normalized_depth = []
+    input_path = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuchRCVBig/JPEGImages/0004.jpg"
+    sem_out, radial_out = FCResBackbone(model, input_path, normalized_depth)
+    cv2.imwrite("/home/thws_robotik/Downloads/test.jpg", sem_out)
+
+
 def estimate_6d_pose_lm(opts):
     horn = HornPoseFitting()
     
