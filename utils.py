@@ -2,6 +2,7 @@ import os
 import argparse
 import torch
 import yaml
+import torch.nn as nn
 
 def get_log_dir(model_name, cfg):
     name = model_name
@@ -43,7 +44,11 @@ def load_checkpoint(model, optimizer, filename='model_best.pth.tar'):
         #print("=> loading checkpoint '{}'".format(filename))
         checkpoint = torch.load(filename)
         start_epoch = checkpoint['epoch']
-        model.load_state_dict(checkpoint['model_state_dict'])
+        if checkpoint["arch"] == "DataParallel":
+            model = nn.DataParallel(model)
+            model.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optim_state_dict'])
         loss = checkpoint['loss']
         #print("=> loaded checkpoint '{}'"

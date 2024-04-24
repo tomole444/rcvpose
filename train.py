@@ -9,7 +9,7 @@ import os
 import shutil
 import matplotlib.pyplot as plt
 from models.fcnresnet import DenseFCNResNet152,ResFCNResNet152
-from AccumulatorSpace import estimate_6d_pose_lm, estimate_6d_pose_lmo
+from AccumulatorSpace import estimate_6d_pose_lm, estimate_6d_pose_lmo, test_ckpt
 
 
 
@@ -207,4 +207,5 @@ class Trainer():
         if self.opts.test_occ:
             estimate_6d_pose_lmo(self.opts)
         else:
+            test_ckpt()
             estimate_6d_pose_lm(self.opts)
