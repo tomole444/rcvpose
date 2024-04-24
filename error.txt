@@ -1,0 +1,26 @@
+#Linemod
+
+torch.Size([1, 256, 120, 160])                 | 11/186 [00:04<00:36,  4.76it/s]
+torch.Size([1, 512, 60, 80])
+torch.Size([1, 1024, 30, 40])
+torch.Size([1, 2048, 15, 20])
+torch.Size([1, 1024, 15, 20])
+torch.Size([1, 1024, 30, 40])
+torch.Size([1, 512, 60, 80])
+
+
+torch.Size([1, 1024, 30, 40])
+torch.Size([1, 1024, 30, 40])
+
+
+#Own
+
+torch.Size([1, 256, 180, 320])                           | 0/35 [00:00<?, ?it/s]
+torch.Size([1, 512, 90, 160])
+torch.Size([1, 1024, 45, 80])
+torch.Size([1, 2048, 23, 40])
+torch.Size([1, 1024, 23, 40])
+torch.Size([1, 1024, 46, 80])
+
+torch.Size([1, 1024, 46, 80])
+torch.Size([1, 1024, 45, 80])

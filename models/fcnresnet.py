@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import numpy as np 
+
 
 #based on https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py
 class Bottleneck(nn.Module):
@@ -119,6 +121,7 @@ class DenseFCNResNet152(nn.Module):
 
 
     def forward(self, x):
+        #print(x.shape)
         #conv1
         x = self.conv1(x)
         x = self.bn1(x)
@@ -157,23 +160,57 @@ class DenseFCNResNet152(nn.Module):
 
         #up5
         up = self.conv_up5(torch.cat((x32s,x16s),1))
-        up = self.up5(up)
         #print(up.size())
+        up = self.up5(up)
+        
+        
+        #print("\n\n\n")
+        #print(up.size())
+        #print(x.size())
+        #print("\n\n\n")
+        #correct dims for 720p imgs
+        if (up.size()[2] != x8s.size()[2]):
+            size = x8s.size()
+            diff = np.abs(up.size()[2]- x8s.size()[2])
+            #size[2] = size[2] + diff
+            test = torch.cuda.FloatTensor(size[0], size[1], diff, size[3]).normal_() #torch.randn((1,1024,1,80))
+            x8s = torch.concat((x8s,test),2)
 
         #up4
         up = self.conv_up4(torch.cat((up,x8s),1))
         up = self.up4(up)
         #print(up.size())
 
+        if (up.size()[2] != x4s.size()[2]):
+            size = x4s.size()
+            diff = np.abs(up.size()[2]- x4s.size()[2])
+            test = torch.cuda.FloatTensor(size[0], size[1], diff, size[3]).normal_() #torch.randn((1,1024,1,80))
+            x4s = torch.concat((x4s,test),2)
+        
+        
         #up3
         up = self.conv_up3(torch.cat((up,x4s),1))
         up = self.up3(up)
+
+        if (up.size()[2] != x2s.size()[2]):
+            size = x2s.size()
+            diff = np.abs(up.size()[2]- x2s.size()[2])
+            test = torch.cuda.FloatTensor(size[0], size[1], diff, size[3]).normal_() #torch.randn((1,1024,1,80))
+            x2s = torch.concat((x2s,test),2)
+        
         #print(up.size())
 
         #up2
         up = self.conv_up2(torch.cat((up,x2s),1))
         up = self.up2(up)
         #print(up.size())
+
+        if (up.size()[2] != x.size()[2]):
+            size = x.size()
+            diff = np.abs(up.size()[2]- x.size()[2])
+            test = torch.cuda.FloatTensor(size[0], size[1], diff, size[3]).normal_() #torch.randn((1,1024,1,80))
+            x = torch.concat((x,test),2)
+
 
         #up1
         up = self.conv_up1(torch.cat((up,x),1))

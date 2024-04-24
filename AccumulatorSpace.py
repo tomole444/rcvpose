@@ -14,6 +14,7 @@ import math
 import h5py
 from sklearn import metrics
 import scipy
+import cv2
 
 
 #lm_cls_names = ['ape', 'benchvise', 'cam', 'can', 'cat', 'duck', 'driller', 'eggbox', 'glue', 'holepuncher','iron','lamp','phone']
@@ -69,10 +70,31 @@ def project(xyz, K, RT):
     RT: [3, 4]
     """
     #pointc->actual scene
-    xyz = np.dot(xyz, RT[:, :3].T) + RT[:, 3:].T
-    actual_xyz=xyz
-    xyz = np.dot(xyz, K.T)
-    xy = xyz[:, :2] / xyz[:, 2:]
+    actual_xyz = np.dot(xyz, np.linalg.inv(RT[:, :3])) + RT[:, 3:].T
+    #print(len(xyz))
+    
+    
+    xyz2 = np.append(xyz,np.ones(len(xyz)).reshape((-1,1)),axis = 1)
+
+    T = np.array([RT[0], RT[1], RT[2], [0,0,0,1]])
+    rotMat = RT[:, :3].T
+    rotVec,_ = cv2.Rodrigues(rotMat)
+    tVec = RT[:, 3:] * (-1)
+    distortion = np.array([])
+
+    actual_xyz2 = T @ xyz2.T
+    actual_xyz2 = actual_xyz2.T
+    actual_xyz2 = actual_xyz2[:,:3]
+    xyz2, _= cv2.projectPoints(actual_xyz2, rotVec, tVec,K, distortion)
+    xy2 = xyz2.reshape(-1,2) 
+    
+    #actual_xyz /= 1000
+    #tVec /= 1000
+
+    xyz_cam = np.dot(actual_xyz, K.T)
+    xy = xyz_cam[:, :2] / xyz_cam[:, 2:]
+
+    #xy = xyz2[:, :2] / xyz2[:, 2:]
     return xy,actual_xyz
 
 def rgbd_to_point_cloud(K, depth):
@@ -553,6 +575,8 @@ def estimate_6d_pose_lm(opts):
         dataPath = rootpvPath + 'JPEGImages/'
         images = os.listdir(dataPath)
         images.sort()
+        images = np.array(images)
+        np.random.shuffle(images)
 
         for filename in images:
             #filename = '000810.jpg'
@@ -564,9 +588,12 @@ def estimate_6d_pose_lm(opts):
                     print("Evaluating ", filename)
                     estimated_kpts = np.zeros((3,3))
                     RTGT = np.load(opts.root_dataset + "LINEMOD/"+class_name+"/pose/pose"+str(int(os.path.splitext(filename)[0]))+'.npy')
+                    #RotX180 = [  [1.0000000,  0.0000000,  0.0000000], [0.0000000, -1.0000000, -0.0000000], [0.0000000,  0.0000000, -1.0000000 ]]
+                    #RTGT[:,:3] = RTGT[:,:3] @ RotX180
                     #print(opts.root_dataset + "LINEMOD/"+class_name+"/pose/pose"+str(int(os.path.splitext(filename)[0]))+'.npy')
                     keypoint_count = 1
                     xyz_mm_icp = []
+                    depth_pc_copy = np.array([])
                     for keypoint in keypoints:
                         keypoint=keypoints[keypoint_count]
                         #print(keypoint)
@@ -604,6 +631,7 @@ def estimate_6d_pose_lm(opts):
                         net_time += toc-tic
                         #print("Network time consumption: ", network_time_single)
                         depth_map1 = read_depth(rootPath+'data/depth'+str(int(os.path.splitext(filename)[0]))+'.dpt')
+                        depth_pc_copy = depth_map1.copy()
                         if opts.using_ckpts:
                             sem_out = np.where(sem_out>0.8,1,0)
                             sem_out = np.where(radial_out<=max_radii_dm[keypoint_count-1], sem_out,0)
@@ -675,17 +703,25 @@ def estimate_6d_pose_lm(opts):
                     if opts.demo_mode:
                         input_image = np.asarray(Image.open(input_path).convert('RGB'))
                         for coor in dump:
-                            input_image[int(coor[1]),int(coor[0])] = [255,0,0]
+                            try:
+                                input_image[int(coor[1]),int(coor[0])] = [255,0,0]
+                            except:
+                                pass
                         plt.imshow(input_image)
                         plt.show()
                     sceneGT = o3d.geometry.PointCloud()
                     sceneEst = o3d.geometry.PointCloud()
+                    scene_depth_map = o3d.geometry.PointCloud()
+                    #print(depth_pc_copy)
+                    xyz23_mm = rgbd_to_point_cloud(linemod_K,depth_pc_copy)
+                    scene_depth_map.points = o3d.utility.Vector3dVector(xyz23_mm)
                     sceneGT.points=o3d.utility.Vector3dVector(xyz_load_transformed)
                     sceneEst.points=o3d.utility.Vector3dVector(xyz_load_est_transformed)
                     sceneGT.paint_uniform_color(np.array([0,1,0]))
                     sceneEst.paint_uniform_color(np.array([1,0,0]))
+                    scene_depth_map.paint_uniform_color(np.array([0.647058824, 0.88627451, 0.905882353]))
                     if opts.demo_mode:
-                        o3d.visualization.draw_geometries([sceneGT, sceneEst],window_name='gt vs est before icp')
+                        o3d.visualization.draw_geometries([sceneGT, sceneEst, scene_depth_map],window_name='gt vs est before icp')
                     
                     
                     
@@ -720,7 +756,7 @@ def estimate_6d_pose_lm(opts):
                         criteria)
                     cad_model.transform(reg_p2p.transformation)
                     if opts.demo_mode:
-                        o3d.visualization.draw_geometries([sceneGT, cad_model],window_name='gt vs est after icp')
+                        o3d.visualization.draw_geometries([sceneGT, cad_model, scene_depth_map],window_name='gt vs est after icp')
                     
                     
                     #print('ADD(s) point distance after ICP: ', distance)

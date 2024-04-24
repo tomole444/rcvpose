@@ -95,7 +95,7 @@ class Trainer():
 
 
                 if self.vis is not None:
-                    self.vis.add_scalar('Val_r+s', 
+                    self.vis.add_scalar('Val_r_s', 
                                         float(loss.detach().cpu().numpy()), 
                                         self.iter_val)
                     self.vis.add_scalar('Val_MAE', 
@@ -138,14 +138,24 @@ class Trainer():
                 desc='Train epoch=%d' % self.epoch,
                 ncols=80,
                 leave=True):
+            #target is faulty
             iteration = batch_idx + self.epoch * len(self.train_loader)
             if self.iteration != 0 and (iteration - 1) != self.iteration:
                 continue  
             self.iteration +=1
 
             data, target, sem_target= data.to(self.device), target.to(self.device), sem_target.to(self.device)
+
+            target_test = target.detach().cpu().numpy()
+            sem_target_test = sem_target.detach().cpu().numpy()
+
             self.optim.zero_grad()
             score,score_rad = self.model(data)
+
+            if (data.size()[2] != score.size()[2]):
+                score = score[:, :, :data.size()[2], :]
+                score_rad = score_rad[:, :, :data.size()[2], :]
+
             score_rad = score_rad.permute(1,0,2,3) * sem_target.permute(1,0,2,3)
             score_rad = score_rad.permute(1,0,2,3)
             

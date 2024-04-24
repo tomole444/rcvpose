@@ -5,10 +5,12 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from numba import jit, prange
+import os
 
-linemod_K = np.array([[572.4114, 0., 325.2611],
-                  [0., 573.57043, 242.04899],
-                  [0., 0., 1.]])
+# linemod_K = np.array([[572.4114, 0., 325.2611],
+#                   [0., 573.57043, 242.04899],
+#                   [0., 0., 1.]])
+
 
 def project(xyz, K, RT):
     """
@@ -51,16 +53,16 @@ def fast_for_map(yList, xList, xyz, distance_list, Radius3DMap):
 
 class RData(RMapDataset):
 
-    def __init__(self, root, dname, set='train', obj_name = 'ape', kpt_num = '1'):
+    def __init__(self, root, dname, set='train', kpt_num = '1'):
         transform = self.transform
         #imageNet mean and std
         self.mean = np.array([0.485, 0.456, 0.406])
         self.std = np.array([0.229, 0.224, 0.225])
+        self.camera_K = np.loadtxt(os.path.join(root, "camera.txt"))
         self.dname = dname
         super().__init__(root,
                         dname,
                         set=set,
-                        obj_name = obj_name,
                         kpt_num = kpt_num,
                         transform=transform
                         )
@@ -71,7 +73,7 @@ class RData(RMapDataset):
         Radius3DMap = np.zeros(mask.shape)
         pixel_coor = np.argwhere(mask==255)
         depth[np.where(mask==0)] = 0
-        xyz_mm,y,x = rgbd_to_point_cloud(linemod_K, depth)
+        xyz_mm,y,x = rgbd_to_point_cloud(self.camera_K, depth)
         xyz=xyz_mm/1000
         #print(xyz)
         #print(gtpose.shape)
@@ -80,7 +82,7 @@ class RData(RMapDataset):
         #print(linemod_K_m)
         kpt_mm = kpt*1000
         #print(kpt_mm)
-        dump, transformed_kpoint = project(np.array([kpt_mm]),linemod_K,gtpose_mm)
+        dump, transformed_kpoint = project(np.array([kpt_mm]),self.camera_K,gtpose_mm)
         #print(transformed_kpoint)
         transformed_kpoint=transformed_kpoint[0]/1000
         distance_list = ((xyz[:,0]-transformed_kpoint[0])**2+(xyz[:,1]-transformed_kpoint[1])**2+(xyz[:,2]-transformed_kpoint[2])**2)**0.5
@@ -120,11 +122,10 @@ class RData(RMapDataset):
 
 def get_loader(opts):
     from data_loader import RData
-    modes = ['val', 'val']
+    modes = ['train', 'val']
     train_loader = data.DataLoader(RData(opts.root_dataset,
                                         opts.dname,
                                         set=modes[0],
-                                        obj_name = opts.class_name,
                                         kpt_num = opts.kpt_num),
                                         batch_size=int(opts.batch_size),
                                         shuffle=True,
@@ -132,7 +133,6 @@ def get_loader(opts):
     val_loader = data.DataLoader(RData(opts.root_dataset,
                                         opts.dname,
                                        set=modes[1],
-                                       obj_name = opts.class_name,
                                         kpt_num = opts.kpt_num),
                                        batch_size=int(opts.batch_size),
                                        shuffle=False,
