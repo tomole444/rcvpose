@@ -44,7 +44,7 @@ def rgbd_to_point_cloud(K, depth):
     pts = np.array([xs, ys, zs]).T
     return pts, vs, us
 
-@jit(nopython=True, parallel=True)   
+#@jit(nopython=True, parallel=True)   
 def fast_for_map(yList, xList, xyz, distance_list, Radius3DMap):
     for i in prange(len(xList)):
         Radius3DMap[yList[i],xList[i]] = distance_list[i]

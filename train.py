@@ -84,6 +84,11 @@ class Trainer():
                     
                 data, target, sem_target= data.to(self.device), target.to(self.device), sem_target.to(self.device)
                 score, score_rad = self.model(data)
+
+                if (data.size()[2] != score.size()[2]):
+                    score = score[:, :, :data.size()[2], :]
+                    score_rad = score_rad[:, :, :data.size()[2], :]
+
                 
                 loss_s = self.loss_sem(score, sem_target)
                 loss_r = self.compute_r_loss(score_rad,target)
@@ -102,6 +107,7 @@ class Trainer():
                                         float(torch.sum(torch.abs(score_rad-target)) / float(len(torch.nonzero(target)))), 
                                         self.iter_val)
                     self.vis.add_scalar('Val_r',float(loss_r.detach().cpu().numpy()),self.iter_val)
+                    self.vis.add_scalar('Val_s',float(loss_s.detach().cpu().numpy()),self.iter_val)
                     self.vis.add_scalar('Val_ACC', 
                                         float(torch.sum(torch.where(torch.abs(score_rad-target)[torch.where(target!=0)]<=0.05,1,0)) / float(len(torch.nonzero(target))))
                                         , self.iter_val)
@@ -173,7 +179,7 @@ class Trainer():
 
             #visulalization
             if self.vis is not None:
-                self.vis.add_scalar('Train_sum', np_loss, iteration)
+                self.vis.add_scalar('Train_r_s', np_loss, iteration)
                 self.vis.add_scalar('Train_r', np_loss_r, iteration)
                 self.vis.add_scalar('Train_s', np_loss_s, iteration)
                 self.vis.add_scalar('Train_ACC', 
@@ -184,7 +190,7 @@ class Trainer():
                 break
 
     def Train(self):
-        max_epoch = int(math.ceil(1. * self.max_iter / len(self.train_loader)))
+        max_epoch = int(self.opts.epochs)#int(math.ceil(1. * self.max_iter / len(self.train_loader)))
         #self.scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optim, verbose=True)
         for epoch in tqdm.trange(self.epoch, max_epoch, desc='Train',
                                  ncols=80):

@@ -3,6 +3,7 @@ from utils import get_config, get_log_dir, str2bool
 from data_loader import get_loader
 from train import Trainer
 import warnings
+import os
 from tensorboardX import SummaryWriter
 warnings.filterwarnings('ignore')
 
@@ -35,6 +36,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size",
                         type=str,
                         default='4')
+    parser.add_argument("--epochs",
+                        type=str,
+                        default='100')
     parser.add_argument("--class_name",
                         type=str,
                         default='ape')
@@ -46,7 +50,10 @@ if __name__ == "__main__":
                         default='1')                        
     parser.add_argument('--model_dir',
                     type=str,
-                    default='ckpts/')   
+                    default='ckpts/')  
+    parser.add_argument('--out',
+                    type=str,
+                    default='logs/')   
     parser.add_argument('--demo_mode',
                     type=str2bool,
                     default=False) 
@@ -62,9 +69,11 @@ if __name__ == "__main__":
     opts.cfg = cfg
 
     if opts.mode in ['train']:
-        opts.out = get_log_dir(opts.dname+'/'+opts.class_name+'Kp'+opts.kpt_num, cfg)
-        print('Output logs: ', opts.out)
-        vis = SummaryWriter(logdir=opts.out+'/tbLog/')
+        #opts.out = get_log_dir(opts.dname+'/'+opts.class_name+'Kp'+opts.kpt_num, cfg)
+        out_path = os.path.join(opts.out, "kpt_" + opts.kpt_num)
+        os.makedirs(out_path,exist_ok=True)
+        print('Output logs: ', out_path)
+        vis = SummaryWriter(logdir=os.path.join(out_path,'/tbLog/'))
     else:
         vis = []
 
