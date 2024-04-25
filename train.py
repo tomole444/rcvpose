@@ -23,6 +23,7 @@ class Trainer():
 
         self.out = os.path.join(opts.out, "kpt_" + opts.kpt_num)
         self.epoch = 0
+        self.iteration = 0
 
         if opts.mode in ['test', 'demo']:
             self.Test()
@@ -45,15 +46,19 @@ class Trainer():
             else:
                 self.optim = torch.optim.SGD(self.model.parameters(), lr=opts.initial_lr, momentum=0.9)
         print(self.optim)
+
         if(opts.resume_train):
             parallel_model = True if torch.cuda.device_count() > 1 else False
-            self.model, self.epoch,self.optim, self.loss_func = utils.load_checkpoint(self.model, self.optim, os.path.join(self.out,"model_best.pth.tar"), parallel_model= parallel_model)
+            if os.path.isfile(os.path.join(self.out,"model_best.pth.tar")):
+                self.model, self.epoch,self.optim, self.loss_func = utils.load_checkpoint(self.model, self.optim, os.path.join(self.out,"model_best.pth.tar"), parallel_model= parallel_model)
+                ckpt = torch.load(os.path.join(self.out,"model_best.pth.tar"))
+                self.iteration = ckpt["iteration"]
+                self.epoch += 1
             for param_group in self.optim.param_groups:
                 param_group['lr'] = opts.initial_lr
             
         self.loss_radial = torch.nn.L1Loss(reduction='sum')
         self.loss_sem = torch.nn.L1Loss()
-        self.iteration = 0
         self.iter_val = 0
         self.max_iter = opts.cfg['max_iteration']
         self.best_acc_mean = math.inf
@@ -147,11 +152,11 @@ class Trainer():
                 desc='Train epoch=%d' % self.epoch,
                 ncols=80,
                 leave=True):
-            #target is faulty
-            iteration = batch_idx + self.epoch * len(self.train_loader)
-            if self.iteration != 0 and (iteration - 1) != self.iteration:
-                continue  
-            self.iteration +=1
+
+            #iteration = batch_idx + self.epoch * len(self.train_loader)
+            #if self.iteration != 0 and (iteration - 1) != self.iteration:
+            #    continue  
+            self.iteration = batch_idx + self.epoch * len(self.train_loader)
 
             data, target, sem_target= data.to(self.device), target.to(self.device), sem_target.to(self.device)
 
@@ -182,9 +187,9 @@ class Trainer():
 
             #visulalization
             if self.vis is not None:
-                self.vis.add_scalar('Train_r_s', np_loss, iteration)
-                self.vis.add_scalar('Train_r', np_loss_r, iteration)
-                self.vis.add_scalar('Train_s', np_loss_s, iteration)
+                self.vis.add_scalar('Train_r_s', np_loss, self.iteration)
+                self.vis.add_scalar('Train_r', np_loss_r, self.iteration)
+                self.vis.add_scalar('Train_s', np_loss_s, self.iteration)
                 self.vis.add_scalar('Train_ACC', 
                                     float(torch.sum(torch.where(torch.abs(score_rad-target)[torch.where(target!=0)]<=0.05,1,0)) / float(len(torch.nonzero(target)))), 
                                     self.iteration)
