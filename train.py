@@ -21,6 +21,9 @@ class Trainer():
         self.val_loader = data_loader[1]
         self.scheduler = []
 
+        self.out = os.path.join(opts.out, "kpt_" + opts.kpt_num)
+        self.epoch = 0
+
         if opts.mode in ['test', 'demo']:
             self.Test()
             return
@@ -43,11 +46,11 @@ class Trainer():
                 self.optim = torch.optim.SGD(self.model.parameters(), lr=opts.initial_lr, momentum=0.9)
         print(self.optim)
         if(opts.resume_train):
-            self.model, self.epoch, self.optim, self.loss_func = utils.load_checkpoint(self.model, self.optim, opts.out+"/model_best.pth.tar")
+            parallel_model = True if torch.cuda.device_count() > 1 else False
+            self.model, self.epoch,self.optim, self.loss_func = utils.load_checkpoint(self.model, self.optim, os.path.join(self.out,"model_best.pth.tar"), parallel_model= parallel_model)
             for param_group in self.optim.param_groups:
                 param_group['lr'] = opts.initial_lr
             
-        self.epoch = 0
         self.loss_radial = torch.nn.L1Loss(reduction='sum')
         self.loss_sem = torch.nn.L1Loss()
         self.iteration = 0
@@ -59,7 +62,7 @@ class Trainer():
 
 
 
-        self.out = opts.out
+        
         if not osp.exists(self.out):
             os.makedirs(self.out)
 

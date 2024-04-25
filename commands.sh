@@ -12,6 +12,10 @@ python main.py --root_dataset="/home/thws_robotik/Documents/Leyh/6dpose/datasets
 python main.py --root_dataset="/home/thws_robotik/Documents/Leyh/6dpose/datasets/apeRCV" --kpt_num='1' --mode=train --batch_size=1 --optim='Adam' --initial_lr=1e-4 --resume=False 
 
 python main.py --root_dataset="/media/irobot/grass/Leyh/datasets/ownBuchRCVBig" --out="/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig" --kpt_num='1' --mode=train --batch_size=12 --epochs=200 --optim='Adam' --initial_lr=1e-4 --resume=False
+python main.py --root_dataset="/media/irobot/grass/Leyh/datasets/ownBuch480" --out="/media/irobot/grass/Leyh/outputs/rcvpose/ownBuch480" --kpt_num='1' --mode=train --batch_size=40 --epochs=50 --optim='Adam' --initial_lr=1e-4 --resume_train=True
+
+python main.py --root_dataset="/media/irobot/grass/Leyh/datasets/ownBuchRCVBig" --out="/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig" --kpt_num='2' --mode=train --batch_size=12 --epochs=25 --optim='Adam' --initial_lr=1e-4 --resume=False; python main.py --root_dataset="/media/irobot/grass/Leyh/datasets/ownBuchRCVBig" --out="/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig" --kpt_num='3' --mode=train --batch_size=12 --epochs=25 --optim='Adam' --initial_lr=1e-4 --resume=False
 
 tensorboard --logdir "/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig/kpt_2/tbLog"
+tensorboard --logdir "/media/irobot/grass/Leyh/outputs/rcvpose/ownBuch480/kpt_1/tbLog"
 #Save model as ply in mm (* 1000) with binary encoding

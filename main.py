@@ -73,7 +73,7 @@ if __name__ == "__main__":
         out_path = os.path.join(opts.out, "kpt_" + opts.kpt_num)
         os.makedirs(out_path,exist_ok=True)
         print('Output logs: ', out_path)
-        vis = SummaryWriter(logdir=os.path.join(out_path,'/tbLog/'))
+        vis = SummaryWriter(logdir=os.path.join(out_path,'tbLog'))
     else:
         vis = []
 

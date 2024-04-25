@@ -37,14 +37,14 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-def load_checkpoint(model, optimizer, filename='model_best.pth.tar'):
+def load_checkpoint(model, optimizer, filename='model_best.pth.tar', parallel_model = False):
     start_epoch = 0
     loss = []
     if os.path.isfile(filename):
         #print("=> loading checkpoint '{}'".format(filename))
         checkpoint = torch.load(filename)
         start_epoch = checkpoint['epoch']
-        if checkpoint["arch"] == "DataParallel":
+        if checkpoint["arch"] == "DataParallel" and not parallel_model:
             model = nn.DataParallel(model)
             model.load_state_dict(checkpoint['model_state_dict'])
         else:
