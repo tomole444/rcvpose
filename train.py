@@ -204,7 +204,8 @@ class Trainer():
                                  ncols=80):
             self.epoch = epoch
             self.train_epoch()
-            self.validate()
+            if(self.epoch % 15 == 0):
+                self.validate()
             if self.epoch % 70 == 0 and self.epoch != 0:
                 for g in self.optim.param_groups:
                     g['lr'] /= 10
