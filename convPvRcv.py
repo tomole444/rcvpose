@@ -49,5 +49,5 @@ class Converter:
 
 if __name__ == "__main__":
     con = Converter("/home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuchBig",
-        "/home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuchRCVBig")
+        "/home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuch480Small")
     con.createSplit(0.8)

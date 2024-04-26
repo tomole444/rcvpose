@@ -517,7 +517,7 @@ depthList=[]
 
 def test_ckpt():
 
-    model_path = "/home/thws_robotik/Documents/Leyh/6dpose/detection/rcvpose/ckpts/book_kpt_1.pth.tar"
+    model_path ="/home/thws_robotik/Documents/Leyh/6dpose/detection/rcvpose/ckpts/ape_pt1.pth.tar" #"/home/thws_robotik/Documents/Leyh/6dpose/detection/rcvpose/ckpts/book/kpt2.pth.tar"
     model = DenseFCNResNet152(3,2)
     #model = torch.nn.DataParallel(model)
     #checkpoint = torch.load(model_path)
@@ -527,9 +527,12 @@ def test_ckpt():
     model.eval()
 
     normalized_depth = []
-    input_path = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuchRCVBig/JPEGImages/0004.jpg"
-    sem_out, radial_out = FCResBackbone(model, input_path, normalized_depth)
-    cv2.imwrite("/home/thws_robotik/Downloads/test.jpg", sem_out)
+    input_path = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/lineModApe/rgb" #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuch480/JPEGImages/"
+    os.makedirs(os.path.join("/home/thws_robotik/Downloads/","inference"), exist_ok=True)
+    for img in os.listdir(input_path):
+        sem_out, radial_out = FCResBackbone(model, os.path.join(input_path, img), normalized_depth)
+        sem_out = np.where(sem_out>0.5,255,0)
+        cv2.imwrite(os.path.join("/home/thws_robotik/Downloads/","inference", img), sem_out)
 
 
 def estimate_6d_pose_lm(opts):
