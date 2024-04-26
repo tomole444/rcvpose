@@ -119,7 +119,7 @@ class Trainer():
                     self.vis.add_scalar('Val_ACC', 
                                         float(torch.sum(torch.where(torch.abs(score_rad-target)[torch.where(target!=0)]<=0.05,1,0)) / float(len(torch.nonzero(target))))
                                         , self.iter_val)
-                    if self.iter_val%50==0:
+                    if self.iter_val%10==0:#%50==0:
                         self.vis.add_image('Val_sem',torch.where(score[0].cpu()>=.5,1,0),self.iter_val)
                 self.iter_val = self.iter_val + 1
         val_loss /= len(self.val_loader)
@@ -204,7 +204,8 @@ class Trainer():
                                  ncols=80):
             self.epoch = epoch
             self.train_epoch()
-            self.validate()
+            if(self.epoch % 15 == 0):
+                self.validate()
             if self.epoch % 70 == 0 and self.epoch != 0:
                 for g in self.optim.param_groups:
                     g['lr'] /= 10

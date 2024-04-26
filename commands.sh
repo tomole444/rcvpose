@@ -18,5 +18,7 @@ python main.py --root_dataset="/home/tomle/Documents/datasets/ownBuch480" --out=
 python main.py --root_dataset="/media/irobot/grass/Leyh/datasets/ownBuchRCVBig" --out="/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig" --kpt_num='2' --mode=train --batch_size=12 --epochs=25 --optim='Adam' --initial_lr=1e-4 --resume=False; python main.py --root_dataset="/media/irobot/grass/Leyh/datasets/ownBuchRCVBig" --out="/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig" --kpt_num='3' --mode=train --batch_size=12 --epochs=25 --optim='Adam' --initial_lr=1e-4 --resume=False
 
 tensorboard --logdir "/media/irobot/grass/Leyh/outputs/rcvpose/ownBuchRCVBig/kpt_2/tbLog"
-tensorboard --logdir "/media/irobot/grass/Leyh/outputs/rcvpose/ownBuch480/kpt_1/tbLog"
+tensorboard --bind_all --port 6006 --logdir "/media/irobot/grass/Leyh/outputs/rcvpose/ownBuch480/kpt_1/tbLog"
+tensorboard --bind_all --port 6007 --logdir "/media/irobot/grass/Leyh/outputs/rcvpose/ownBuch480/kpt_3/tbLog"
+tensorboard --bind_all --port 6008 --logdir "/home/tomle/Documents/outputs/rcvpose/ownBuch480/kpt_2/tbLog/"
 #Save model as ply in mm (* 1000) with binary encoding
